@@ -24,6 +24,7 @@
     * systemdResolvedDnssec:
         - false: Default value validates DNSSEC on servers that support it.
         - true: do not accept results from servers that do not support DNSSEC
+    * systemdResolvedDomains:
     * systemdResolvedCache:
     * systemdResolvedDnsStubListener:
 

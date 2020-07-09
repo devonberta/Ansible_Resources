@@ -1,0 +1,56 @@
+# This file is managed by ansible
+
+#  This file is part of systemd.
+#
+#  systemd is free software; you can redistribute it and/or modify it
+#  under the terms of the GNU Lesser General Public License as published by
+#  the Free Software Foundation; either version 2.1 of the License, or
+#  (at your option) any later version.
+#
+# Entries in this file show the compile time defaults.
+# You can change settings by editing this file.
+# Defaults can be restored by simply deleting this file.
+#
+# See resolved.conf(5) for details
+
+[Resolve]
+{% if systemdResolved is defined %}
+DNS={{ systemdResolved }}
+{% else %}
+#DNS=
+{% endif %}
+{% if systemdResolvedFallbackDns is defined %}
+FallbackDNS={{ systemdResolvedFallbackDns }}
+{% else %}
+#FallbackDNS=
+{% endif %}
+{% if systemdResolvedDomains is defined %}
+Domains={{ systemdResolvedDomains }}
+{% else %}
+#Domains=
+{% endif %}
+{% if systemdResolvedLlmnr is defined %}
+LLMNR={{ systemdResolvedLlmnr }}
+{% else %}
+#LLMNR=no
+{% endif %}
+{% if systemdResolvedMulticastDns is defined %}
+MulticastDNS={{ systemdResolvedMulticastDns }}
+{% else %}
+#MulticastDNS=no
+{% endif %}
+{% if systemdResolvedDnssec is defined %}
+DNSSEC={{ systemdResolvedDnssec }}
+{% else %}
+#DNSSEC=no
+{% endif %}
+{% if systemdResolvedCache is defined %}
+Cache={{ systemdResolvedCache }}
+{% else %}
+#Cache=yes
+{% endif %}
+{% if systemdResolvedDnsStubListener is defined %}
+DNSStubListener={{ systemdResolvedDnsStubListener }}
+{% else %}
+#DNSStubListener=yes
+{% endif %}
