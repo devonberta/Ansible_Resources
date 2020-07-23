@@ -14,8 +14,8 @@
 # See resolved.conf(5) for details
 
 [Resolve]
-{% if systemdResolved is defined %}
-DNS={{ systemdResolved }}
+{% if systemdResolvedDns is defined %}
+DNS={{ systemdResolvedDns }}
 {% else %}
 #DNS=
 {% endif %}
