@@ -1,0 +1,6 @@
+---
+os_media:
+  - distro_name: ubuntu1804
+    iso_url: "http://cdimage.ubuntu.com/ubuntu/releases/18.04/release/ubuntu-18.04.4-server-amd64.iso"
+  - distro_name: centos7
+    iso_url: "http://mirror.keystealth.org/centos/7/isos/x86_64/CentOS-7-x86_64-Minimal-2003.iso"

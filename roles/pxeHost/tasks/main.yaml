@@ -1,0 +1,4 @@
+---
+
+- name: include all in one tasks when a member of the all in one group
+  include: pxeHostAllInOne.yaml

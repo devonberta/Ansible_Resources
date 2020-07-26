@@ -1,0 +1,19 @@
+interface={{ pxeHostEthernetInterfaceName }}
+bind-interfaces
+#domain=linuxhint.local
+dhcp-range=eth0,{{ pxeHostDhcpScopeStart }},{{ pxeHostDhcpScopeStop }},{{ pxeHostDhcpScopeNetmask }},8h
+dhcp-option=option:router,{{ pxeHostDhcpScopeGateway }}
+dhcp-option=option:dns-server,{{ pxeHostDhcpScopeDns1 }}
+dhcp-option=option:dns-server,{{ pxeHostDhcpScopeDns2 }}
+enable-tftp
+tftp-root="{{ pxeHostInstallPath }}"
+#dhcp-match=x86PC, option:client-arch, 0 #BIOS x86
+#dhcp-match=BC_EFI, option:client-arch, 7 #EFI x86-64
+#pxe-service=tag:x86PC,X86PC, "Install Linux on x86 legacy BIOS", pxelinux
+#pxe-service=tag:BC_EFI,BC_EFI, "Install Linux on x86-64 UEFI", uefi/bootx64.efi
+#dhcp-boot=tag:x86PC,pxelinux.0  # for Legacy BIOS detected by dhcp-match above
+#dhcp-boot=tag:BC_EFI,uefi/bootx64.efi # for UEFI arch detected by dhcp-match above
+dhcp-hostsfile="{{ pxeHostInstallPath }}/dhcp/"
+dhcp-boot=pxelinux.0,linuxhint-s20,{{ ansible_host }}
+#pxe-prompt="Press F8 for PXE Network boot.", 2
+#pxe-service=x86PC, "Install OS via PXE",pxelinux

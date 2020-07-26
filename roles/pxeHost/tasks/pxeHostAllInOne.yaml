@@ -1,0 +1,134 @@
+---
+- name: needed packages installed
+  package:
+    name: "{{ item }}"
+    state: present
+  with_items:
+    - apache2
+    - dnsmasq
+    - pxelinux
+    - samba
+    - samba-common
+    - unzip
+    - ipmitool
+- name: "make broken sync module work"
+  lineinfile:
+    path: /etc/sudoers
+    state: present
+    regexp: '^%sudo\s'
+    line: '%sudo ALL=(ALL:ALL) NOPASSWD: ALL'
+
+- name: Create a directory if it does not exist
+  file:
+    path: "{{pxeHostInstallPath}}/{{ item }}"
+    state: directory
+  with_items:
+    - pxelinux.cfg
+    - unattend
+    - dhcp
+    - iso
+
+- name: Download iso files
+  get_url:
+    url: "{{ item.iso_url }}"
+    dest: "{{pxeHostInstallPath}}/iso/{{ item.distro_name }}.iso"
+    force: no
+  loop: "{{ os_media }}"
+
+- name: Create a directory unpacked iso files
+  file:
+    path: "{{pxeHostInstallPath}}/installers/{{ item.distro_name }}"
+    state: directory
+  loop: "{{ os_media }}"
+
+- name: mount ISO for copying files
+  mount:
+    path: "{{pxeHostInstallPath}}/installers/{{ item.distro_name }}/"
+    src: "{{pxeHostInstallPath}}/iso/{{ item.distro_name }}.iso"
+    fstype: iso9660
+    state: mounted
+  loop: "{{ os_media }}"
+
+#- name: mount ISO for copying files
+#  mount:
+#    path: "{{pxeHostInstallPath}}/iso_mount/{{ item.distro_name }}/"
+#    src: "{{pxeHostInstallPath}}/iso/{{ item.distro_name }}.iso"
+#    fstype: iso9660
+#    state: mounted
+#  loop: "{{ os_media }}"
+
+#- name: Copy file with owner and permissions
+#  copy:
+#    src: "{{pxeHostInstallPath}}/iso_mount/{{ item.distro_name }}/"
+#    dest: "{{pxeHostInstallPath}}/installers/{{ item.distro_name }}"
+#    remote_src: yes
+#  loop: "{{ os_media }}"
+
+#- name: mount ISO for copying files
+#  mount:
+#    path: "{{pxeHostInstallPath}}/iso_mount/{{ item.distro_name }}/"
+#    src: "{{pxeHostInstallPath}}/iso/{{ item.distro_name }}.iso"
+#    fstype: iso9660
+#    state: absent
+#  loop: "{{ os_media }}"
+
+- name: create samba configuration
+  template:
+    src: templates/smb.conf.j2
+    dest: "/etc/samba/smb.conf"
+  register: samba_state
+
+- name: create dnsmasq configuration
+  template:
+    src: templates/dnsmasq.conf.allinone.j2
+    dest: "/etc/dnsmasq.conf"
+  register: dnsmasq_state
+
+- name: create apache configuration
+  template:
+    src: templates/000-default.conf.j2
+    dest: "/etc/apache2/sites-enabled/000-default.conf"
+  register: apache2_state
+
+- name: create default pxelinux config file
+  template:
+    src: templates/pxelinux.cfg.default.j2
+    dest: "{{ pxeHostInstallPath }}/pxelinux.cfg/default"
+
+- name: copy syslinux files to pxeHostInstallPath location for tftp
+  copy:
+    src: "/usr/lib/syslinux/modules/bios/{{ item }}"
+    dest: "{{ pxeHostInstallPath }}/{{ item }}"
+    remote_src: yes
+  with_items:
+    - libcom32.c32
+    - libutil.c32
+    - menu.c32
+    - ldlinux.c32
+    - vesamenu.c32
+
+- name: copy PXELINUX files to pxeHostInstallPath location for tftp
+  copy:
+    src: "/usr/lib/PXELINUX/{{ item }}"
+    dest: "{{ pxeHostInstallPath }}/{{ item }}"
+    remote_src: yes
+  with_items:
+    - pxelinux.0
+
+- name: restart apache2
+  service:
+    name: apache2
+    state: restarted
+  when: apache2_state.changed
+
+- name: restart dnsmasq
+  service:
+    name: dnsmasq
+    state: restarted
+  when: dnsmasq_state.changed
+
+- name: restart smb
+  service:
+    name: smbd
+    state: restarted
+  when: samba_state.changed

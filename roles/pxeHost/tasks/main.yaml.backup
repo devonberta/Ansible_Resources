@@ -1,0 +1,116 @@
+- name: needed packages installed
+  package:
+    name: "{{ item }}"
+    state: present
+  with_items:
+    - apache2
+    - dnsmasq
+    - syslinux
+    - pxelinux
+    - samba
+    - samba-common
+    - python-glade2
+    - system-config-samba
+    - unzip
+    - ipmitool
+    - rsync
+# Need passwordless sudo setup for rsync/synchronize to function properly, much faster then copy
+- name: "make broken sync module work"
+  lineinfile:
+    path: /etc/sudoers
+    state: present
+    regexp: '^%sudo\s'
+    line: '%sudo ALL=(ALL:ALL) NOPASSWD: ALL'
+
+- name: Create a directory if it does not exist
+  file:
+    path: "{{pxeHostInstallPath}}/{{ item }}"
+    state: directory
+  with_items:
+    - pxelinux.cfg
+    - installers/centos7
+    - installers/ubuntu1804
+    - installers/windows2016
+    - unattend
+    - dhcp
+- name: create samba configuration
+  template:
+    src: templates/pxe_pxeserver_templates/smb.conf.j2
+    dest: "/etc/samba/smb.conf"
+  register: samba_state
+
+- name: create dnsmasq configuration
+  template:
+    src: templates/pxe_pxeserver_templates/dnsmasq.conf.j2
+    dest: "/etc/dnsmasq.conf"
+  register: dnsmasq_state
+
+- name: create apache configuration
+  template:
+    src: templates/pxe_pxeserver_templates/000-default.conf.j2
+    dest: "/etc/apache2/sites-enabled/000-default.conf"
+  register: apache2_state
+
+- name: copy syslinux files to pxeHostInstallPath location for tftp
+  copy:
+    src: "/usr/lib/syslinux/modules/bios/{{ item }}"
+    dest: "{{ pxeHostInstallPath }}/{{ item }}"
+    remote_src: yes
+  with_items:
+    - libcom32.c32
+    - libutil.c32
+    - menu.c32
+    - ldlinux.c32
+    - vesamenu.c32
+
+- name: copy PXELINUX files to pxeHostInstallPath location for tftp
+  copy:
+    src: "/usr/lib/PXELINUX/{{ item }}"
+    dest: "{{ pxeHostInstallPath }}/{{ item }}"
+    remote_src: yes
+  with_items:
+    - pxelinux.0
+
+- name: copy pxelinux.cfg files
+  copy:
+    src: "/root/templates/{{ ansible_host | replace('.','-')}}/pxelinux.cfg/"
+    dest: "{{ pxeHostInstallPath }}/pxelinux.cfg/"
+
+- name: copy unattend files
+  copy:
+    src: "/root/templates/{{ ansible_host | replace('.','-')}}/unattend/"
+    dest: "{{ pxeHostInstallPath }}/unattend/"
+
+- name: copy dhcp files
+  copy:
+    src: "/root/templates/{{ ansible_host | replace('.','-')}}/dhcp/"
+    dest: "{{ pxeHostInstallPath }}/dhcp/"
+  register: dhcp_state
+
+- name: sync installer files to remote host
+  synchronize:
+    src: "/root/templates/installers/ubuntu1804/"
+    dest: "{{ pxeHostInstallPath }}/installers/ubuntu1804/"
+
+- name: sync installer files to remote host
+  synchronize:
+    src: "/root/templates/installers/centos7/"
+    dest: "{{ pxeHostInstallPath }}/installers/centos7/"
+
+- name: restart apache2
+  service:
+    name: apache2
+    state: restarted
+  when: apache2_state.changed
+
+- name: restart dnsmasq
+  service:
+     name: dnsmasq
+    state: restarted
+  when: dnsmasq_state.changed or dhcp_state.changed
+
+- name: restart smb
+  service:
+    name: smbd
+    state: restarted
+  when: samba_state.changed
