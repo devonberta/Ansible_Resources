@@ -1,0 +1,21 @@
+listener "tcp" {
+  address = "0.0.0.0:8200"
+  cluster_address = "0.0.0.0:8201"
+  tls_cert_file = "{{ vault_file_path }}/{{ vault_tls_cert }}"
+  tls_key_file = "{{ vault_file_path }}/{{ vault_tls_key }}"
+}
+
+storage "raft" {
+  path    = "/{{ vault_file_path }}/raft/"
+  node_id = "{{ inventory_hostname }}"
+{% for host in play_hosts %}
+{% if hostvars[host].vault_role == "member" and hostvars[host].inventory_hostname != inventory_hostname %}
+retry_join {
+    leader_api_addr = "https://{{hostvars[host].inventory_hostname}}:8200/"
+}
+{% endif %}
+{% endfor %}
+}
+
+api_addr = "https://{{ inventory_hostname }}:8200"
+cluster_addr = "https://{{ inventory_hostname }}:8201"

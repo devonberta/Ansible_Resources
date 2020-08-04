@@ -1,2 +1,4 @@
 playbooks/test.yaml
+playbooks/vault.yaml
 inventory/hosts
+testfiles/*
