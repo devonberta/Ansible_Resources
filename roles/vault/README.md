@@ -1,13 +1,36 @@
 # Vault Role
-0. Other informaiton around syntax and formatting:
-    * Variables, groups and naming of items will be done in camel case in all code. Special characters over time need to be updated as ansible matures upper and lowercase letters are not liekly to change.
-    * variables are prefixed with the role name in camel case to make certain the variable name is unique per role.
-    * All yaml spacing will be done with 2 spaces for each level of ident.
-
-1. Deploys Hashicorp Vault OSS in clusterd configuration with a number of configurations:
-    * Cluster with RAFT storage SHAMIR Unseal method
-    * Cluster with RAFT storage and Transit Engine Auto Unseal method
-2. Variables used:
-    * vaultSoftwareVersion
-3. Example Playbook:
-    * Coming soon
+0. Best Practices
+    * Manual run of first cluster to act as transit engine for unsealing additional clusters
+    * unseal keys of transit cluster protected by gpg keys
+    * Quantity of keys for unseal distributed amongst trusted parties and multiple keys requried for unseal
+    * administrative token generated for trusted parties
+    * audit log enabled by root token and unable to be disabled by administrative token
+    * root token destroyed after initial configuration and regenerated via unseal keys when required.
+    * secondary clusters can be automated once transit keys have been generated for cluster.
+1. install vault
+    * add repo
+    * install vault
+2. Configure Vault
+    * set permissions on directories
+    * configure vault.hcl
+        - shamir
+        - transit: keyname and token
+3. Initialize Vault
+    * generate gpg key if requried
+    * api call to init
+        - root token, unseal / recovery keys
+    * unseal cluster
+4. add cluster members
+    * check status
+    * join to cluster
+5. Additional configuration
+    * audit log enabled
+    * administrative token generated
+    * administrative policy generated
+    * root token destoryed
+6. User configuration
+    * enable auth methods
+    * generate user policies
+7. Engine Configuration
+    * enable engines
+    * configure engines
