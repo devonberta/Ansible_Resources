@@ -1,0 +1,23 @@
+---
+- name: Create bare_metal_provision_pxe_server at run time
+  add_host:
+    hostname: '{{ bare_metal_provision_pxe_server }}'
+    ansible_host: '{{ bare_metal_provision_pxe_server }}'
+    ansible_password: "{{ bare_metal_provision_pxe_server_password }}"
+- name: create pxelinux file
+  template:
+    src: templates/pxe_pxelinux_templates/pxelinux.ubuntu1804.j2
+    dest: "/root/templates/{{ bare_metal_provision_pxe_server | replace('.','-')}}/pxelinux.cfg/01-{{ macaddress | replace(':','-') }}"
+  delegate_to: "{{ bare_metal_provision_pxe_server }}"
+
+- name: create unattend files
+  template:
+    src: templates/pxe_unattend_templates/unattend.ubuntu1804.j2
+    dest: "/root/templates/{{ pxe_server | replace('.','-')}}/unattend/01-{{ macaddress | replace(':','-') }}.cfg"
+  delegate_to: "{{ bare_metal_provision_pxe_server }}"
+
+- name: create dhcp reservation files
+  template:
+    src: templates/pxe_dhcp_templates/dhcp.reservation.j2
+    dest: "/root/templates/{{ pxe_server | replace('.','-')}}/dhcp/01-{{ macaddress | replace(':','-') }}"
+  delegate_to: "{{ bare_metal_provision_pxe_server }}"

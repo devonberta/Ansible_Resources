@@ -1,0 +1,90 @@
+---
+- name: Clone a virtual machine from Windows template and customize
+  vmware_guest:
+    hostname: "{{ vmware_vcenter_hostname }}"
+    username: "{{ vmware_vcenter_username }}"
+    password: "{{ vmware_vcenter_password }}"
+    validate_certs: no
+    datacenter: "{{ vmware_datacenter }}"
+    cluster: "{{ vmware_cluster }}"
+    name: "{{ inventory_hostname }}"
+    state: "{{ vmware_state }}"
+    folder: "{{ vmware_folder }}"
+    template: "{{ vmware_template }}"
+    datastore: "{{ vmware_datastore }}"
+    hardware:
+      memory_mb: "{{ vmware_vm_memory  }}"
+      num_cpus: "{{vmware_vm_vcpu }}"
+    networks:
+    - name: "{{ network_cidr }}"
+      ip: "{{ ansible_host }}"
+      netmask: "{{ network_netmask }}"
+      gateway: "{{ network_gateway }}"
+      domain: "{{ network_dns_suffix }}"
+      dns_servers:
+      - "{{ network_dns_1 }}"
+      - "{{ network_dns_2 }}"
+    wait_for_customization: true
+    customization:
+      autologon: yes
+      dns_servers:
+      - "{{ network_dns_1 }}"
+      - "{{ network_dns_2 }}"
+      domain: "{{ network_dns_suffix }}"
+      password: "{{ ansible_password }}"
+#      runonce:
+#      - powershell.exe -ExecutionPolicy Unrestricted -File C:\Windows\Temp\ConfigureRemotingForAnsible.ps1 -ForceNewSSLCert -EnableCredSSP
+  delegate_to: localhost
+#  when: osType == windows
+  when: false
+
+- name:  Clone a virtual machine from Linux template and customize
+  vmware_guest:
+    hostname: "{{ vmware_vcenter_hostname }}"
+    username: "{{ vmware_vcenter_username }}"
+    password: "{{ vmware_vcenter_password }}"
+    validate_certs: no
+    datacenter: "{{ vmware_datacenter }}"
+    cluster: "{{ vmware_cluster }}"
+    name: "{{ inventory_hostname }}"
+    state: "{{ vmware_state }}"
+    folder: "{{ vmware_folder }}"
+    template: "{{ vmware_template }}"
+    datastore: "{{ vmware_datastore }}"
+    hardware:
+      memory_mb: "{{ vmware_vm_memory  }}"
+      num_cpus: "{{vmware_vm_vcpu }}"
+    networks:
+    - name: "{{ network_cidr }}"
+      ip: "{{ ansible_host }}"
+      netmask: "{{ network_netmask }}"
+      gateway: "{{ network_gateway }}"
+    wait_for_customization: true
+    customization:
+      domain: "{{ network_dns_suffix }}"
+      dns_servers:
+      - "{{ network_dns_1 }}"
+      - "{{ network_dns_2 }}"
+      dns_suffix:
+        - "{{ network_dns_suffix }}"
+  delegate_to: localhost
+#  when: osType == linux
+
+- name: Add disks to virtual machine using UUID
+  vmware_guest_disk:
+    hostname: "{{ vmware_vcenter_hostname }}"
+    username: "{{ vmware_vcenter_username }}"
+    password: "{{ vmware_vcenter_password }}"
+    validate_certs: no
+    datacenter: "{{ vmware_datacenter }}"
+    name: "{{ inventory_hostname }}"
+    disk:
+      - size_gb: "{{ item.disk_size_gb }}"
+        type: "{{ item.disk_type }}"
+        datastore: "{{ vmware_datastore }}"
+        state: "{{ item.disk_state }}"
+        scsi_controller: "{{ item.disk_scsi_controller }}"
+        unit_number: "{{ item.disk_scsi_number }}"
+        scsi_type: "{{ item.disk_scsi_type }}"
+  loop: "{{ vmware_disks_list }}"
+  delegate_to: localhost
